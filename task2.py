@@ -84,4 +84,3 @@ if args.total:
                 file.write(text + "\n")
 
 
-#check if can commit
