@@ -38,12 +38,28 @@ def get_data(file_name):
             if athlete["year"] not in countries_dict[athlete["country"]]:
                 countries_dict[athlete["country"]][athlete["year"]] = {}
             if athlete["medal"] not in countries_dict[athlete["country"]][athlete["year"]]:
-                countries_dict[athlete["country"]][athlete["year"]][athlete["medal"]] = 1
+                countries_dict[athlete["country"]][athlete["year"]][athlete["medal"]] = 0
             if "total" not in countries_dict[athlete["country"]][athlete["year"]]:
-                countries_dict[athlete["country"]][athlete["year"]]["total"] = 1
+                countries_dict[athlete["country"]][athlete["year"]]["total"] = 0
             countries_dict[athlete["country"]][athlete["year"]][athlete["medal"]] += 1
             countries_dict[athlete["country"]][athlete["year"]]["total"] += 1
         return countries_dict
+
+
+def find_max(country_list, country_name):
+    years = country_list[country_name].keys()
+    max = 0
+    best_year = ""
+    for year in years:
+        max_check = country_list[country_name][year]["total"]
+        if max_check > max:
+            max = max_check
+            best_year = year
+    return max, best_year
+
+def print_result(result_dict, country_name):
+    message = f"{country_name}'s best result was in {result_dict[country_name][1]} with a total of {result_dict[country_name][0]} medals"
+    return message
 
 def make_athlete(line):
     [id, name, sex, age, height, weight, team, noc, games, year, season, city, sport, event, medal] = line.split('\t')
@@ -107,22 +123,6 @@ if args.total:
             with open(args.output, "a") as file:
                 file.write(text + "\n")
 
-
-def find_max(country_list, country_name):
-    years = country_list[country_name].keys()
-    max = 0
-    best_year = ""
-    for year in years:
-        max_check = country_list[country_name][year]["total"]
-        if max_check > max:
-            max = max_check
-            best_year = year
-    return max, best_year
-
-def print_result(result_dict, country_name):
-    message = f"{country_name}'s best result was in {result_dict[country_name][1]} with a total of {result_dict[country_name][0]} medals"
-    return message
-
 if args.overall:
     countries = get_data(args.data_file)
     totals = {}
@@ -130,9 +130,9 @@ if args.overall:
         total = find_max(countries, country)
         totals[country] = total
         text = print_result(totals, country)
-    if args.output:
-        with open(args.output, "a") as file:
-            file.write(text + "\n")
+        if args.output:
+            with open(args.output, "a") as file:
+                file.write(text + "\n")
 
 
 
