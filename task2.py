@@ -10,9 +10,9 @@ parser.add_argument("-output",
                     help = "Filepath for your results")
 
 parser.add_argument("-medals",
-                    nargs = 2,                      # тут для змінної medals вказуємо кількість аргументів яку вона після себе приймає (тут 2)
-                    metavar = ("country", "year"),  # тут вказуємо назви цих аргументів
-                    help = "Input: country and year. Output: names of 10 medalists.") # потім коли треба якийсь аргумент, просто пишемо args.medals[index], для country індекс 0, для year індекс 1
+                    nargs = 2,
+                    metavar = ("country", "year"),
+                    help = "Input: country and year. Output: names of 10 medalists.")
 
 parser.add_argument("-total",
                     nargs = 1,
@@ -23,6 +23,10 @@ parser.add_argument("-overall",
                     metavar = "country",
                     help = "Pick at least one country")
 
+parser.add_argument("-interactive",
+                    action = "store_true",
+                    help = "Starts an interacrive mode.")
+
 args = parser.parse_args()
 
 def get_data(file_name):
@@ -31,18 +35,20 @@ def get_data(file_name):
         next(datafile)
         for line in datafile:
             athlete = make_athlete(line)
+            if athlete["team"] not in countries_dict:
+                countries_dict[athlete["team"]] = {}
+            if athlete["year"] not in countries_dict[athlete["team"]]:
+                countries_dict[athlete["team"]][athlete["year"]] = {}
+                countries_dict[athlete["team"]][athlete["year"]]["city"] = athlete["city"]
+            if "total" not in countries_dict[athlete["team"]][athlete["year"]]:
+                countries_dict[athlete["team"]][athlete["year"]]["total"] = 0
             if athlete["medal"] == "NA":
                 continue
-            if athlete["country"] not in countries_dict:
-                countries_dict[athlete["country"]] = {}
-            if athlete["year"] not in countries_dict[athlete["country"]]:
-                countries_dict[athlete["country"]][athlete["year"]] = {}
-            if athlete["medal"] not in countries_dict[athlete["country"]][athlete["year"]]:
-                countries_dict[athlete["country"]][athlete["year"]][athlete["medal"]] = 0
-            if "total" not in countries_dict[athlete["country"]][athlete["year"]]:
-                countries_dict[athlete["country"]][athlete["year"]]["total"] = 0
-            countries_dict[athlete["country"]][athlete["year"]][athlete["medal"]] += 1
-            countries_dict[athlete["country"]][athlete["year"]]["total"] += 1
+            if athlete["medal"] not in countries_dict[athlete["team"]][athlete["year"]]:
+                countries_dict[athlete["team"]][athlete["year"]][athlete["medal"]] = 0
+
+            countries_dict[athlete["team"]][athlete["year"]][athlete["medal"]] += 1
+            countries_dict[athlete["team"]][athlete["year"]]["total"] += 1
         return countries_dict
 
 
@@ -55,11 +61,32 @@ def find_max(country_list, country_name):
         if max_check > max:
             max = max_check
             best_year = year
-    return max, best_year
-
-def print_result(result_dict, country_name):
-    message = f"{country_name}'s best result was in {result_dict[country_name][1]} with a total of {result_dict[country_name][0]} medals"
+    message = f"{country_name}'s best result was in {best_year} with a total of {max} medals"
     return message
+
+def find_min(country_list, country_name):
+    years = country_list[country_name].keys()
+    min = 100000
+    best_year = ""
+    for year in years:
+        min_check = country_list[country_name][year]["total"]
+        if min_check < min:
+            min = min_check
+            worst_year = year
+    message = f"{country_name}'s worst result was in {worst_year} with a total of {min} medals"
+    return message
+
+def find_mean(dictionary):
+    n_of_yrs = 0
+    tot_g = 0
+    tot_s = 0
+    tot_b = 0
+    for year in dictionary.values():
+        n_of_yrs += 1
+        tot_g += year.get("Gold", 0)
+        tot_s += year.get("Silver", 0)
+        tot_b += year.get("Bronze", 0)
+    return f"The team gets: {round(tot_g/n_of_yrs, 2)}-golden, {round(tot_s/n_of_yrs, 2)}-silver, {round(tot_b/n_of_yrs, 2)}-bronze medals, on average."
 
 def make_athlete(line):
     [id, name, sex, age, height, weight, team, noc, games, year, season, city, sport, event, medal] = line.split('\t')
@@ -83,9 +110,9 @@ def make_athlete(line):
 
 def is_good(line):
     athlete = make_athlete(line)
-    return (args.medals[0] == athlete["team"] or args.medals[0] == athlete["noc"]) and args.medals[1] == athlete["year"] and athlete["medal"] != "NA" # отут як я вище писав args.medals[0]
+    return (args.medals[0] == athlete["team"] or args.medals[0] == athlete["noc"]) and args.medals[1] == athlete["year"] and athlete["medal"] != "NA"
 
-if args.medals:         # тут я додав умову щоб код виконувався лише якщо вписали -medals
+if args.medals:
     with open(args.data_file) as file:
         medals = {"gold": 0, "silver": 0, "bronze": 0}
 
@@ -125,14 +152,29 @@ if args.total:
 
 if args.overall:
     countries = get_data(args.data_file)
-    totals = {}
     for country in args.overall:
-        total = find_max(countries, country)
-        totals[country] = total
-        text = print_result(totals, country)
+        text = find_max(countries, country)
+        print(text)
         if args.output:
             with open(args.output, "a") as file:
                 file.write(text + "\n")
 
+if args.interactive: #перша участь(рік місце) | найуспішніша олімпіада(ккість медалей) | найневдаліша | середня ккість медалей кожного типу
+    print("In this mode you will enter a name of a country and get a short summary of its results.")
+    countries = get_data(args.data_file)
 
-
+    while True:
+        country = input("Please enter the name of the country, or 'exit' if you want to exit: ").strip().lower().title()
+        if country == "Exit":
+            exit()
+        elif country in countries.keys():
+            text = (f"The first year when {country} participated in Olympics was {min(countries[country].keys())} \n"    #, in {countries[country]["city"]} 
+                    f"{find_max(countries, country)} \n"
+                    f"{find_min(countries, country)} \n"
+                    f"{find_mean(countries[country])} \n")
+            print(text)
+            if args.output:
+                with open(args.output, "a") as file:
+                    file.write(text + "\n")
+        else:
+            print(f"There is not such country as {country}, try again")
