@@ -87,11 +87,14 @@ def is_good(line):
 
 if args.medals:         # тут я додав умову щоб код виконувався лише якщо вписали -medals
     with open(args.data_file) as file:
+        next(file)
+
         medals = {"gold": 0, "silver": 0, "bronze": 0}
 
-        next(file)
         athletes = [make_athlete(line) for line in file if is_good(line)]
-
+        if len(athletes) < 11:
+            print("Either country hasn't competed in the olympics that year or placed less than 10 times")
+            exit()
         for idx, athlete in enumerate(athletes):
             if idx < 10:
                 print(f"{athlete["name"]} - {athlete["sport"]} - {athlete["medal"]}")
@@ -103,6 +106,7 @@ if args.medals:         # тут я додав умову щоб код вико
             else:
                 medals["bronze"] +=1
         print(medals)
+
 
 if args.total:
     with open(args.data_file) as file:
@@ -123,10 +127,14 @@ if args.total:
             with open(args.output, "a") as file:
                 file.write(text + "\n")
 
+
 if args.overall:
     countries = get_data(args.data_file)
     totals = {}
     for country in args.overall:
+        if country not in countries:
+            print(f"Either {country} has never competed in the olympics or you've entered the name wrong")
+            continue
         total = find_max(countries, country)
         totals[country] = total
         text = print_result(totals, country)
