@@ -114,9 +114,10 @@ def is_good(line):
 
 if args.medals:
     with open(args.data_file) as file:
+        next(file)
+
         medals = {"gold": 0, "silver": 0, "bronze": 0}
 
-        next(file)
         athletes = [make_athlete(line) for line in file if is_good(line)]
 
         for idx, athlete in enumerate(athletes):
@@ -139,7 +140,7 @@ if args.total:
             line = make_athlete(line)
             if str(line["year"]) == args.total[0] and line["medal"] != "NA":
                 if line["team"] in teams:
-                    teams[line["team"]][line["medal"]] += 1 #мені за це соромно
+                    teams[line["team"]][line["medal"]] += 1
                 else:
                     teams[line["team"]] = {"Gold": 0, "Silver": 0, "Bronze": 0}
                     teams[line["team"]][line["medal"]] += 1
@@ -153,6 +154,9 @@ if args.total:
 if args.overall:
     countries = get_data(args.data_file)
     for country in args.overall:
+        if country not in countries:
+            print(f"Either {country} has never competed in the olympics or you've entered the name wrong")
+            continue
         text = find_max(countries, country)
         print(text)
         if args.output:
