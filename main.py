@@ -1,5 +1,4 @@
 import argparse
-from pyexpat.errors import messages
 
 parser = argparse.ArgumentParser("Analyze Olympic medal data.")
 
@@ -110,7 +109,7 @@ def make_athlete(line):
 
 def is_good(line):
     athlete = make_athlete(line)
-    return (args.medals[0] == athlete["team"] or args.medals[0] == athlete["noc"]) and args.medals[1] == athlete["year"] and athlete["medal"] != "NA"
+    return (args.medals[0] == athlete["team"] or args.medals[0] == athlete["noc"]) and int(args.medals[1]) == athlete["year"] and athlete["medal"] != "NA"
 
 if args.medals:
     with open(args.data_file) as file:
@@ -119,6 +118,9 @@ if args.medals:
         medals = {"gold": 0, "silver": 0, "bronze": 0}
 
         athletes = [make_athlete(line) for line in file if is_good(line)]
+        if len(athletes) == 0:
+            print("Either country didn't compete or there's no such country.")
+            exit()
 
         for idx, athlete in enumerate(athletes):
             if idx < 10:
@@ -144,6 +146,9 @@ if args.total:
                 else:
                     teams[line["team"]] = {"Gold": 0, "Silver": 0, "Bronze": 0}
                     teams[line["team"]][line["medal"]] += 1
+    if not teams:
+        print(f"There weren`t games in {args.total[0]}.")
+        exit()
     for team in teams:
         text = f"{team} - Gold:{teams[team]['Gold']} - Silver:{teams[team]['Silver']} - Bronze:{teams[team]['Bronze']}"
         print(text)
@@ -163,7 +168,7 @@ if args.overall:
             with open(args.output, "a") as file:
                 file.write(text + "\n")
 
-if args.interactive: #перша участь(рік місце) | найуспішніша олімпіада(ккість медалей) | найневдаліша | середня ккість медалей кожного типу
+if args.interactive:
     print("In this mode you will enter a name of a country and get a short summary of its results.")
     countries = get_data(args.data_file)
 
@@ -172,7 +177,7 @@ if args.interactive: #перша участь(рік місце) | найусп�
         if country == "Exit":
             exit()
         elif country in countries.keys():
-            text = (f"The first year when {country} participated in Olympics was {min(countries[country].keys())} \n"    #, in {countries[country]["city"]} 
+            text = (f"The first year when {country} participated in Olympics was {min(countries[country].keys())} \n"
                     f"{find_max(countries, country)} \n"
                     f"{find_min(countries, country)} \n"
                     f"{find_mean(countries[country])} \n")
@@ -181,4 +186,4 @@ if args.interactive: #перша участь(рік місце) | найусп�
                 with open(args.output, "a") as file:
                     file.write(text + "\n")
         else:
-            print(f"There is not such country as {country}, try again")
+            print(f"There is not such country as {country}, try again.")
