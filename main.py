@@ -2,11 +2,11 @@ import argparse
 
 parser = argparse.ArgumentParser("Analyze Olympic medal data.")
 
-parser.add_argument("data_file", help="Path to the TSV data file")
+parser.add_argument("data_file", help="Path to the TSV data file.")
 
 parser.add_argument("-output",
                     type = str,
-                    help = "Filepath for your results")
+                    help = "Filepath for your results.")
 
 parser.add_argument("-medals",
                     nargs = 2,
@@ -15,7 +15,8 @@ parser.add_argument("-medals",
 
 parser.add_argument("-total",
                     nargs = 1,
-                    metavar = "year")
+                    metavar = "year",
+                    help = "Gives you statistics on some year.")
 
 parser.add_argument("-overall",
                     nargs = "+",
